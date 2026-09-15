@@ -1,6 +1,7 @@
 import { browser } from 'wxt/browser';
+import { permissionPolicy } from '../shared/permission-policy';
 
-export const TRACKING_PERMISSIONS: ('tabs' | 'idle' | 'alarms' | 'storage')[] = ['tabs', 'idle', 'alarms', 'storage'];
+export const TRACKING_PERMISSIONS = permissionPolicy(import.meta.env.BROWSER).optional;
 
 export function hasTrackingPermissions(): Promise<boolean> {
   return browser.permissions.contains({ permissions: TRACKING_PERMISSIONS });

@@ -1,12 +1,12 @@
 # WebStats
 
-A private, local website-time tracker for Chrome/Chromium 120+. Built with WXT, React, strict TypeScript, IndexedDB, Recharts, and CSS variables. No account, backend, telemetry, content scripts, or remote assets.
+A private, local website-time tracker for Chrome/Chromium 120+ and desktop Firefox/Zen with Gecko 140+. Built with WXT, React, strict TypeScript, IndexedDB, Recharts, and CSS variables. No account, backend, telemetry, content scripts, or remote assets.
 
 The 420 × 500 popup follows all four structural outlines and finished screens in the [WebStats Figma design](https://www.figma.com/design/PkzLUXsP7qn7ANnRlL75C8/WebStats). The supplied logo and navigation SVGs are copied unchanged; IBM Plex Sans is bundled locally. Site initials avoid contacting favicon services.
 
 ## Develop, build, and install
 
-Use Node.js 22.12+, 24.x, or 26+ and npm. The original package name and version are retained; `package-lock.json` locks dependencies.
+Use Node.js 22.12+, 24.x, or 26+ and npm. The original package name is retained; `package-lock.json` locks dependencies.
 
 ```sh
 npm ci
@@ -15,7 +15,10 @@ npm run typecheck
 npm run lint
 npm test
 npm run build           # .output/chrome-mv3/
-npm run zip             # Packaged extension in .output/
+npm run zip             # Chromium ZIP in .output/
+npm run dev:firefox      # Firefox MV3 development build
+npm run build:firefox    # .output/firefox-mv3/
+npm run zip:firefox      # Validated Firefox XPI and review sources in .output/
 ```
 
 To load the production build:
@@ -28,11 +31,26 @@ To load the production build:
 
 After rebuilding, use **Reload** on the extension card. `npm run dev` creates a separate development build; its local development-server connection is absent from production. If WXT cannot locate Chrome, load `.output/chrome-mv3-dev` manually while the development server runs.
 
-An experimental Firefox MV3 build is available with `npm run build:firefox` in `.output/firefox-mv3`. It has an explicit add-on ID and declares no external data collection. It is build-checked, not browser-validated or signed for distribution.
+## Firefox and Zen installation
+
+**Use the Firefox build, not `.output/chrome-mv3` or the Chromium ZIP.** Firefox MV3 uses a nonpersistent background page (`background.scripts`); Chromium uses a service worker. WXT generates the appropriate manifest, and Firefox gets a stable add-on ID and a declaration of no external data collection.
+
+For local testing:
+
+1. Run `npm run zip:firefox`.
+2. Open `about:debugging#/runtime/this-firefox` in Firefox or Zen.
+3. Click **Load Temporary Add-on** and select `.output/firefox-mv3/manifest.json` or `.output/webstats-firefox-unsigned.xpi`.
+4. Open WebStats, press **Start**, and approve tab access. Idle access is also requested at that gesture; Firefox grants it silently.
+
+Temporary add-ons are removed when the browser exits. For persistent installation via **Install Add-on From File**, you need a **Mozilla-signed XPI**. An unsigned XPI can be reported as corrupt or unverified; renaming a ZIP does not sign it. Do not install the GitHub repository/source ZIP as an add-on. See [Mozilla signing and distribution](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/).
+
+To obtain a signed package, upload `.output/webstats-firefox-unsigned.xpi` to [Mozilla Add-on Developer Hub](https://addons.mozilla.org/developers/) for **self-distribution**, provide `.output/webstats-sources.zip` when asked for source, and download the signed XPI after approval. Source includes the npm lockfile and build instructions above. Alternatively, set `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET` in your terminal environment using your [AMO API credentials](https://addons.mozilla.org/developers/addon/api/key/) and run `npm run sign:firefox`. This submits an unlisted version plus its review sources and saves the signed artifact under `.output/firefox-signed/`. Keep credentials out of Git. Mozilla signing requires an account and approval; the local build is deliberately labeled **unsigned**.
+
+`npm run lint:firefox` runs Mozilla's validator on the generated manifest and bundled code. The two remaining `innerHTML` warnings originate in React DOM's vendor implementation (including its unused `dangerouslySetInnerHTML` path), not WebStats's rendering code; site labels are ordinary escaped React text. The decimal chart dependency uses its ESM distribution to avoid the legacy UMD `Function` fallback.
 
 ## Permissions and onboarding
 
-**No permissions are requested at installation.** Start directly calls `permissions.request()` from the click gesture with all four optional permissions:
+**Tracking access is requested only on Start.** Chromium defers all four permissions. Firefox does not support `alarms` or `storage` as optional permissions, so its manifest declares those two at installation; neither grants website access. Firefox defers `tabs` and `idle`. Start directly calls `permissions.request()` from the click gesture with the appropriate optional permissions:
 
 | Permission | Purpose |
 | --- | --- |
@@ -41,7 +59,7 @@ An experimental Firefox MV3 build is available with `npm run build:firefox` in `
 | `alarms` | Checkpoint every 30 seconds and recover the tracking cursor after worker suspension. |
 | `storage` | Keep a random browser-session ID in `storage.session`, so browser shutdown time is never joined onto an earlier session. Analytics and preferences use IndexedDB. |
 
-There are no host permissions, scripting permissions, download permissions, or required installation permissions. Every tracking permission can be deferred. A denied request leaves onboarding visible with **Try again**; success persists onboarding and opens Home. Revocation immediately prevents new tracking and returns the UI to onboarding. Existing data is retained for reconnection.
+There are no host permissions, scripting permissions, or download permissions. A denied request leaves onboarding visible with **Try again**; success persists onboarding and opens Home. Revocation immediately prevents new tracking and returns the UI to onboarding. Existing data is retained for reconnection. Declaring local storage/alarms on Firefox does not enable tracking before setup succeeds. The [Firefox optional-permissions documentation](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/optional_permissions) lists the supported runtime permissions.
 
 Chrome’s `tabs` warning may mention browsing history because of the API’s capabilities; WebStats only reads the current tab’s hostname. The [Chrome permissions API](https://developer.chrome.com/docs/extensions/reference/api/permissions) documents runtime requests and user gestures.
 
@@ -81,11 +99,16 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
+npm run zip:firefox
+npm run lint:firefox
 npx playwright install chromium
 npm run test:browser
+npm run test:firefox      # Requires a Firefox executable
 ```
 
 The browser script uses its own temporary profile and the **unchanged production build**. It checks onboarding, a simulated denied permission response, real previously granted permissions, live tab/domain transitions, internal-page exclusion, forced worker termination, a full browser restart, settings, chart export, long names/many sites, navigation placement, and deletion. It writes screenshots, an SVG, and `browser-validation.json` to ignored `test-results/`. Synthetic report rows exist only in the disposable test profile.
+
+The Firefox script installs the **actual unsigned XPI temporarily** using Mozilla `web-ext`, verifies first-run local-only permissions, simulated denial/retry, real Start requests after disposable-profile grants, HTTP hostname changes, internal-page exclusion, settings, chart rendering, and revocation. It saves `test-results/firefox-validation.json`. It never disables signature checks or changes your browser profile. Set `FIREFOX_BINARY` to test a Firefox derivative, for example `FIREFOX_BINARY=/opt/zen-browser-bin/zen npm run test:firefox`. This workspace was tested in Zen 1.21.15b / Gecko 154. Native prompt approval/denial still needs a manual smoke check; grants and denial are supplied only inside the test profile.
 
 To use a custom browser download directory, set `PLAYWRIGHT_BROWSERS_PATH` for **both** install and test commands. This workspace was verified with `/tmp/webstats-browsers`. Native Chromium permission dialogs are outside Playwright’s page DOM: the denial response is simulated, and the script seeds grants in its closed temporary profile before exercising the real permission API. It never changes the user’s profile or production permissions.
 

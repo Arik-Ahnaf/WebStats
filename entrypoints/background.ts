@@ -115,7 +115,8 @@ export default defineBackground(() => {
     }
   });
   browser.tabs.onRemoved.addListener(() => schedule());
-  browser.tabs.onReplaced.addListener(() => schedule());
+  // Some Firefox versions omit Chromium's prerender replacement event.
+  browser.tabs.onReplaced?.addListener(() => schedule());
   browser.tabs.onDetached.addListener(() => schedule());
   browser.tabs.onAttached.addListener(() => schedule());
   browser.windows.onFocusChanged.addListener(windowId => schedule({ windowId, focusChanged: true }));
