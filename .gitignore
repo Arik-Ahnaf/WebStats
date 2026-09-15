@@ -1,0 +1,23 @@
+node_modules/
+.wxt/
+.output/
+coverage/
+test-results/
+*.log
+.env
+.env.*
+!.env.example
+
+# Local agent/editor state
+.agents/
+.codex/
+.idea/
+.vscode/
+
+# Operating-system and temporary files
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+*.swp
+*.swo
+*~
