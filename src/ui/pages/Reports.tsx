@@ -3,11 +3,12 @@ import { buildReport, formatDuration } from '../../analytics/reports';
 import { downloadChart } from '../../charts/export';
 import type { Period, Snapshot } from '../../shared/types';
 import { Button, EmptyState, Modal, SiteRow } from '../components/primitives';
+import type { SiteFavicons } from '../useSiteFavicons';
 
 const UsageChart = lazy(() => import('../components/UsageChart').then(module => ({ default: module.UsageChart })));
 
-export function Reports({ snapshot, onDelete, onSettings, busy }: {
-  snapshot: Snapshot; onDelete: () => Promise<boolean>; onSettings: () => void; busy: boolean;
+export function Reports({ snapshot, onDelete, onSettings, busy, favicons }: {
+  snapshot: Snapshot; onDelete: () => Promise<boolean>; onSettings: () => void; busy: boolean; favicons: SiteFavicons;
 }) {
   const [period, setPeriod] = useState<Period>('month');
   const [offset, setOffset] = useState(0);
@@ -42,7 +43,7 @@ export function Reports({ snapshot, onDelete, onSettings, busy }: {
       </div>
     </section>
     <section className="report-scroll" tabIndex={0} aria-label="Ranked website usage">
-      {report.sites.length ? <ol className="site-list">{report.sites.map((site, index) => <SiteRow key={site.hostname} site={site} rank={index + 1} report />)}</ol>
+      {report.sites.length ? <ol className="site-list">{report.sites.map((site, index) => <SiteRow key={site.hostname} site={site} rank={index + 1} favicons={favicons} report />)}</ol>
         : <EmptyState title="Your report starts with a visit">No website activity for this {period}.<br />Browse a little, then check back.</EmptyState>}
     </section>
     <div className="report-notice" role="status">{notice || (!canChart ? 'Chart downloads are turned off in Settings.' : '')}</div>

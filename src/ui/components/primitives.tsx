@@ -2,6 +2,9 @@ import { useEffect, useId, useRef } from 'react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import type { RankedSite } from '../../analytics/reports';
 import { formatDuration } from '../../analytics/reports';
+import { faviconUrl } from '../favicon';
+import { siteNameFromHostname } from '../site-name';
+import type { SiteFavicons } from '../useSiteFavicons';
 
 export type Page = 'home' | 'reports' | 'settings';
 
@@ -20,18 +23,27 @@ export function Navigation({ page, onChange }: { page: Page; onChange: (page: Pa
   </nav>;
 }
 
-/** Local initials avoid contacting a favicon service or persisting a page URL. */
-export function SiteIcon({ hostname, large = false }: { hostname: string | null; large?: boolean }) {
-  const initial = hostname?.replace(/^www\./, '').slice(0, 1).toUpperCase() ?? 'W';
-  return <span className={`site-icon ${large ? 'site-icon-large' : ''}`} aria-hidden="true">{initial}</span>;
+export function SiteIcon({ hostname, large = false, favicon }: {
+  hostname: string | null; large?: boolean; favicon?: string;
+}) {
+  const initial = hostname ? siteNameFromHostname(hostname).slice(0, 1).toUpperCase() : 'W';
+  const size = large ? 64 : 32;
+  const source = hostname ? faviconUrl(hostname, size, favicon) : null;
+  return <span className={`site-icon ${large ? 'site-icon-large' : ''}`} aria-hidden="true">
+    <span className="site-icon-fallback">{initial}</span>
+    {source && <img key={source} className="site-favicon" src={source} alt=""
+      width={size} height={size} onError={event => { event.currentTarget.hidden = true; }} />}
+  </span>;
 }
 
-export function SiteRow({ site, rank, report = false }: { site: RankedSite; rank: number; report?: boolean }) {
+export function SiteRow({ site, rank, report = false, favicons = {} }: {
+  site: RankedSite; rank: number; report?: boolean; favicons?: SiteFavicons;
+}) {
   return <li className={`site-row ${report ? 'report-row' : ''}`}>
     <span className="rank" aria-hidden="true">{rank}.</span>
-    {report && <SiteIcon hostname={site.hostname} />}
+    <SiteIcon hostname={site.hostname} favicon={favicons[site.hostname]} />
     <div className="site-details">
-      <span className="domain" title={site.hostname}>{site.hostname}</span>
+      <span className="domain" title={site.hostname}>{siteNameFromHostname(site.hostname)}</span>
       <div className="site-numbers"><span className="duration">{formatDuration(site.durationMs)}</span>
         {report && <span className="percentage">{site.percentage.toFixed(1)}%</span>}
       </div>

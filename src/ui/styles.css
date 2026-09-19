@@ -27,7 +27,7 @@ button, select, input, summary { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 3px solid #c5b3fa; outline-offset: 4px; }
 button, input, select { transition: background-color 120ms ease, opacity 120ms ease; }
 button:hover:not(:disabled) { filter: brightness(1.16); }
-.app-shell { width: 100%; height: 500px; display: flex; flex-direction: column; border-radius: var(--radius); overflow: hidden; position: relative; background: var(--background); }
+.app-shell { width: 100%; height: 500px; display: flex; flex-direction: column; overflow: hidden; position: relative; background: var(--background); }
 .button { border: 0; border-radius: 8px; min-height: 40px; padding: 8px 10px; font-size: 19px; line-height: 1.25; font-weight: 600; background: var(--primary); color: #fff; }
 .button-danger { background: var(--destructive); color: #141023; }
 .button-secondary { background: var(--dark-violet); }
@@ -43,10 +43,12 @@ button:hover:not(:disabled) { filter: brightness(1.16); }
 .home-page, .reports-page, .settings-page { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .home-page { padding: 20px 35px 0; }
 .current-site { display: flex; align-items: center; gap: 12px; min-height: 86px; }
-.site-icon { flex: 0 0 35px; height: 35px; width: 35px; border-radius: 8px; background: var(--foreground); color: var(--dark-violet); display: grid; place-items: center; font-size: 24px; font-weight: 600; }
+.site-icon { position: relative; flex: 0 0 35px; height: 35px; width: 35px; border-radius: 8px; overflow: hidden; background: var(--foreground); color: var(--dark-violet); display: grid; place-items: center; font-size: 24px; font-weight: 600; }
 .site-icon-large { flex-basis: 74px; width: 74px; height: 74px; border-radius: 17px; color: var(--foreground); background: var(--dark-violet); font-size: 44px; }
+.site-icon-fallback { grid-area: 1 / 1; }
+.site-favicon { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--background); }
 .current-details { flex: 1; min-width: 0; }
-.current-details h1 { font-size: 29px; font-weight: 500; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.current-details h1 { font-size: 25px; font-weight: 500; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .current-numbers { display: flex; justify-content: space-between; gap: 12px; font-size: 18px; font-weight: 300; font-style: italic; line-height: 1.6; }
 .tracking-status { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap; }
 .status-dot { width: 5px; height: 5px; background: var(--muted); border-radius: 50%; flex-shrink: 0; }
@@ -60,7 +62,7 @@ button:hover:not(:disabled) { filter: brightness(1.16); }
 .site-row { display: flex; align-items: center; gap: 12px; min-height: 62px; }
 .rank { font-weight: 500; font-size: 38px; min-width: 42px; text-align: right; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .site-details { flex: 1; min-width: 0; }
-.domain { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 23px; line-height: 1.2; }
+.domain { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 19px; line-height: 1.2; }
 .site-numbers { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .duration, .percentage { font-size: 20px; font-style: italic; font-weight: 300; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .empty-state { text-align: center; margin: auto; padding: 46px 12px 20px; font-size: 14px; line-height: 1.6; color: var(--muted); }
@@ -151,7 +153,7 @@ button:hover:not(:disabled) { filter: brightness(1.16); }
   .report-actions { padding-left: 24px; padding-right: 24px; gap: 10px; }
   .report-actions .button { font-size: 16px; }
   .report-controls, .reports-brand { margin-left: 24px; margin-right: 24px; }
-  .current-details h1 { font-size: 25px; }
+  .current-details h1 { font-size: 21px; }
   .current-numbers { font-size: 16px; }
   .report-total { display: none; }
 }

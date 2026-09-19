@@ -48,10 +48,12 @@ To obtain a signed package, upload `.output/webstats-firefox-unsigned.xpi` to [M
 
 `npm run lint:firefox` runs Mozilla's validator on the generated manifest and bundled code. The two remaining `innerHTML` warnings originate in React DOM's vendor implementation (including its unused `dangerouslySetInnerHTML` path), not WebStats's rendering code; site labels are ordinary escaped React text. The decimal chart dependency uses its ESM distribution to avoid the legacy UMD `Function` fallback.
 
+Site icons are loaded from the browser's local favicon cache and are never sent to a third-party service or persisted by WebStats. Chromium requests the optional `favicon` permission when the user presses **Start**. Firefox/Zen uses cached icon data exposed for open tabs by the existing `tabs` permission. Missing favicons fall back to site initials.
+
 ## Screens and reports
 
-- **Home:** current hostname, today’s elapsed time, visits, tracking status, and ranked top sites. Lists scroll without moving the bottom navigation.
-- **Reports:** calendar Week/Month selection, previous periods, ranked usage, durations, shares of the selected period’s total, and progress bars. **View chart** opens a Recharts bar chart with tooltips and an accessible daily-value table.
+- **Home:** compact site names with full-hostname tooltips, cached favicons, today’s elapsed time, visits, tracking status, and ranked top sites. Lists scroll without moving the bottom navigation.
+- **Reports:** compact site names with full-hostname tooltips and cached favicons, calendar Week/Month selection, previous periods, ranked usage, durations, shares of the selected period’s total, and progress bars. **View chart** opens a Recharts bar chart with tooltips and an accessible daily-value table.
 - **Download chart:** exports a standalone 1000 × 620 SVG with dates, axes, seconds/minutes/hours as appropriate, total usage, and top site. Open the SVG in a browser or graphics editor; it scales without losing quality.
 - **Delete Stats:** confirms deletion across **all dates**, clears usage and the tracking cursor atomically, and preserves preferences. Subsequent activity starts fresh.
 - **Settings:** Generate charts controls subordinate Weekly and Monthly options, chart viewing, and exports. Turning charts off does not disable time tracking or ranked reports.

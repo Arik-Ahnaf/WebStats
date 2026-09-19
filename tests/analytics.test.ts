@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { addDays, localDate, splitAtMidnight } from '../src/analytics/dates';
 import { buildReport, formatDuration, periodRange, rankSites } from '../src/analytics/reports';
 import { normalizeHostname } from '../src/tracking/domain';
+import { siteNameFromHostname } from '../src/ui/site-name';
 import { chartUnit, createChartSvg, escapeXml } from '../src/charts/export';
 import type { UsageRecord } from '../src/shared/types';
 
@@ -17,6 +18,20 @@ describe('privacy boundary', () => {
     expect(normalizeHostname('http://127.0.0.1:8080/')).toBe('127.0.0.1');
     expect(normalizeHostname('https://www.example.com')).toBe('www.example.com');
     expect(normalizeHostname('https://bücher.de')).toBe('xn--bcher-kva.de');
+  });
+});
+
+describe('compact site labels', () => {
+  it.each([
+    ['10minuteschool.com', '10minuteschool'],
+    ['open.spotify.com', 'spotify'],
+    ['www.example.com', 'example'],
+    ['news.bbc.co.uk', 'bbc'],
+    ['localhost', 'localhost'],
+    ['127.0.0.1', '127.0.0.1'],
+    ['2001:db8::1', '2001:db8::1'],
+  ])('displays %s as %s', (hostname, name) => {
+    expect(siteNameFromHostname(hostname)).toBe(name);
   });
 });
 

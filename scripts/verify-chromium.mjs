@@ -48,7 +48,7 @@ try {
 const preferencesPath = path.join(profile, 'Default', 'Preferences');
 const preferences = JSON.parse(await readFile(preferencesPath, 'utf8'));
 const extensionPreferences = preferences.extensions.settings[extensionId];
-const grants = { api: ['tabs', 'idle', 'alarms', 'storage'], explicit_host: [], scriptable_host: [], manifest_permissions: [] };
+const grants = { api: ['tabs', 'idle', 'alarms', 'storage', 'favicon'], explicit_host: [], scriptable_host: [], manifest_permissions: [] };
 extensionPreferences.active_permissions = grants;
 extensionPreferences.granted_permissions = grants;
 extensionPreferences.runtime_granted_permissions = grants;
@@ -70,18 +70,18 @@ try {
     if (!response.ok) throw new Error(response.error);
     return response.snapshot;
   };
-  await context.route('http://*.webstats.test/**', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Test website</title><h1>Local browser fixture</h1>' }));
+  await context.route('https://*.webstats.test/**', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%236650af%22/></svg>"><title>Test website</title><h1>Local browser fixture</h1>' }));
   const first = await context.newPage();
-  await first.goto('http://alpha.webstats.test/private?do-not-store=this#secret');
+  await first.goto('https://alpha.webstats.test/private?do-not-store=this#secret');
   await first.bringToFront();
   await expect.poll(async () => (await snapshot()).currentSite?.hostname).toBe('alpha.webstats.test');
   await first.waitForTimeout(1200);
   const second = await context.newPage();
-  await second.goto('http://beta.webstats.test/');
+  await second.goto('https://beta.webstats.test/');
   await second.bringToFront();
   await expect.poll(async () => (await snapshot()).records.find(row => row.hostname === 'alpha.webstats.test')?.durationMs ?? 0).toBeGreaterThan(500);
   await second.waitForTimeout(700);
-  await second.goto('http://gamma.webstats.test/');
+  await second.goto('https://gamma.webstats.test/');
   await expect.poll(async () => (await snapshot()).records.find(row => row.hostname === 'beta.webstats.test')?.durationMs ?? 0).toBeGreaterThan(300);
   const tracked = await snapshot();
   if (JSON.stringify(tracked.records).includes('do-not-store')) throw new Error('A URL leaked into analytics');
@@ -185,9 +185,12 @@ try {
   }));
   await popup.reload();
   await expect(popup.locator('.site-row')).toHaveCount(87);
+  await expect(popup.locator('.site-favicon:not([hidden])').first()).toBeVisible();
   await popup.screenshot({ path: path.join(artifacts, 'home-many-sites.png') });
   await popup.getByRole('button', { name: 'Reports', exact: true }).click();
   await expect(popup.locator('.report-row')).toHaveCount(87);
+  await expect(popup.locator('.report-row .domain').first()).toHaveText('mozilla');
+  await expect(popup.locator('.report-row .site-icon').first().locator('.site-favicon:not([hidden])')).toBeVisible();
   const layout = await popup.evaluate(() => ({
     horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
     navBottom: document.querySelector('.bottom-nav').getBoundingClientRect().bottom,

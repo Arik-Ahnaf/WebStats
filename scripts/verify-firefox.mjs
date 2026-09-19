@@ -12,7 +12,7 @@ const { getPrefs } = await import(new URL('lib/firefox/preferences.js', import.m
 const artifacts = path.resolve('test-results');
 await mkdir(artifacts, { recursive: true });
 const results = [];
-const server = createServer((_request, response) => { response.end('<!doctype html><title>WebStats local test</title>Local browser test'); });
+const server = createServer((_request, response) => { response.end('<!doctype html><link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%236650af%22/></svg>"><title>WebStats local test</title>Local browser test'); });
 await new Promise(resolve => server.listen(0, '0.0.0.0', resolve));
 const port = server.address().port;
 const runner = await webExt.cmd.run({
@@ -171,10 +171,18 @@ try {
   assert.equal(snapshot.currentSite.hostname, 'localhost');
   assert.ok(snapshot.records.some(row => row.hostname === 'localhost' && row.durationMs > 0));
   assert.ok(snapshot.records.every(row => Object.keys(row).sort().join(',') === 'date,durationMs,hostname,visits'));
+  await evaluateAsync(actor, 'browser.tabs.getCurrent().then(tab => browser.tabs.update(tab.id, {active:true})).then(() => true)');
+  await eventually(actor, 'document.querySelector(".site-row") !== null');
+  await evaluate(actor, 'document.querySelector("[aria-label=Reports]").click(); true');
+  await eventually(actor, '[...document.querySelectorAll(".site-favicon")].some(icon => icon.complete && icon.naturalWidth > 0 && !icon.hidden)');
+  assert.equal(await evaluate(actor, 'document.querySelector(`[title="localhost"]`).textContent'), 'localhost');
+  results.push('Reports use compact site labels and Firefox displays cached favicons for visited tabs.');
+
   await evaluateAsync(actor, `browser.tabs.update(${tab.id}, {url:"about:blank"}).then(() => true)`);
   await pause(300);
   assert.equal((await message({ type: 'snapshot' })).status, 'unsupported');
   results.push('Real tab activation and same-tab domain navigation accumulate hostname-only data; internal pages stop tracking.');
+  await evaluateAsync(actor, 'browser.tabs.getCurrent().then(tab => browser.tabs.update(tab.id, {active:true})).then(() => true)');
 
   await message({ type: 'settings', settings: { generateCharts: true, weekly: false, monthly: true } });
   assert.equal((await message({ type: 'snapshot' })).preferences.weekly, false);
